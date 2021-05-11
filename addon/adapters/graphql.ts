@@ -1,13 +1,19 @@
 import DS from 'ember-data';
 import gql from 'graphql-tag';
+import { isPresent } from '@ember/utils';
 
 export default class Graphql extends DS.Adapter {
+  host = undefined;
+  namespace = undefined;
+
   async findAll(store, type, neverSet, snapshotRecordArray) {
     console.log('type', type);
     const serializer = store.serializerFor(type);
     const modelClass = store.modelFor(type);
 
-    const url = '/graphql';
+    const url = [this.host, this.namespace, 'graphql']
+      .filter(isPresent)
+      .join('/');
     const fragment = serializer.fragment(modelClass, 'lol');
 
     const query = gql`
