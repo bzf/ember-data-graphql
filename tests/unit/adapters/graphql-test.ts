@@ -18,7 +18,10 @@ module('Unit | Adapter | graphql', function (hooks) {
       '/graphql',
       () => ({
         data: {
-          users: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
+          users: {
+            pageInfo: {},
+            users: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
+          },
         },
       }),
       200
@@ -41,9 +44,10 @@ module('Unit | Adapter | graphql', function (hooks) {
 
     const result = await adapter.query(store, User, undefined, []);
 
-    assert.deepEqual(result, [
-      { id: 1, name: 'Bruno', age: 35, __typename: 'User' },
-    ]);
+    assert.deepEqual(result, {
+      meta: {},
+      data: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
+    });
   });
 
   test('queryRecord', async function (assert) {
@@ -51,7 +55,7 @@ module('Unit | Adapter | graphql', function (hooks) {
       '/graphql',
       () => ({
         data: {
-          users: { id: 1, name: 'Bruno', age: 35, __typename: 'User' },
+          user: { id: 1, name: 'Bruno', age: 35, __typename: 'User' },
         },
       }),
       200

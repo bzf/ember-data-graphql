@@ -23,9 +23,12 @@ export default class Graphql extends DS.Adapter {
     const query = gql`
       query {
         ${fieldName}${this.serializeParams(options)} {
-          ...${fragmentName}
-          id
-          __typename
+          pageInfo { ${this.pageInfoKeys().join(' ')} }
+          ${this.keyForQueryNodes(modelClass)} {
+            ...${fragmentName}
+            id
+            __typename
+          }
         }
       }
       ${fragment}
@@ -39,11 +42,10 @@ export default class Graphql extends DS.Adapter {
       body: JSON.stringify({ query: `query ${print(query)}` }),
     }).then((r) => r.json());
 
-    if (Array.isArray(result.data[fieldName])) {
-      return result.data[fieldName];
-    } else {
-      return [result.data[fieldName]];
-    }
+    return {
+      data: result.data[fieldName][this.keyForQueryNodes(type)],
+      meta: result.data[fieldName].pageInfo,
+    };
   }
 
   async queryRecord(store, type, options) {
@@ -58,8 +60,6 @@ export default class Graphql extends DS.Adapter {
     const fragmentName = shortId();
     const fragment = serializer.fragment(modelClass, fragmentName);
 
-    console.log(fragment);
-
     const query = gql`
       query {
         ${fieldName}${this.serializeParams(options)} {
@@ -70,8 +70,6 @@ export default class Graphql extends DS.Adapter {
       }
       ${fragment}
     `;
-
-    console.log(query);
 
     const result = await fetch(url, {
       method: 'POST',
@@ -94,6 +92,14 @@ export default class Graphql extends DS.Adapter {
 
   fieldForQueryRecord(modelClass) {
     return singularize(modelClass.modelName).toLowerCase();
+  }
+
+  keyForQueryNodes(modelClass) {
+    return pluralize(modelClass.modelName).toLowerCase();
+  }
+
+  pageInfoKeys() {
+    return ['startCursor', 'hasNextPage'];
   }
 
   // * `createRecord()`

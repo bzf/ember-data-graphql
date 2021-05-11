@@ -15,6 +15,18 @@ export default class Graphql extends DS.Serializer {
           },
           { data: [], included: [] }
         );
+    } else if (payload.data) {
+      return payload.data
+        .map((hash) => this.normalize(store, modelClass, hash))
+        .reduce(
+          (acc, { data, included }) => {
+            return {
+              data: [...acc.data, data],
+              included: [...acc.included, ...included],
+            };
+          },
+          { data: [], included: [] }
+        );
     } else {
       return this.normalize(store, modelClass, payload);
     }
