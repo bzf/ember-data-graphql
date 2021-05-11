@@ -13,7 +13,7 @@ module('Unit | Serializer | graphql', function (hooks) {
   });
 
   module('normalize', function () {
-    test('normalize', function (assert) {
+    test('normalize', async function (assert) {
       const store = this.owner.lookup('service:store');
       const serializer = this.owner.lookup('serializer:graphql');
 
@@ -21,7 +21,7 @@ module('Unit | Serializer | graphql', function (hooks) {
         @attr('string') declare name: string;
         @attr('number') declare age: number;
       }
-      this.owner.register('model:user', User);
+      await this.owner.register('model:user', User, { singleton: false });
 
       const payload = {
         id: 3,

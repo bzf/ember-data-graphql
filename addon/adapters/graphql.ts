@@ -2,40 +2,11 @@ import DS from 'ember-data';
 import gql from 'graphql-tag';
 import { isPresent } from '@ember/utils';
 import { print } from 'graphql/language/printer';
+import { pluralize } from 'ember-inflector';
 
 export default class Graphql extends DS.Adapter {
   host = undefined;
   namespace = undefined;
-
-  async findAll(store, type, neverSet, snapshotRecordArray) {
-    const serializer = store.serializerFor(type.modelName);
-    const modelClass = store.modelFor(type.modelName);
-
-    const url = [this.host, this.namespace, 'graphql']
-      .filter(isPresent)
-      .join('/');
-    const fragment = serializer.fragment(modelClass, 'lol');
-
-    const query = gql`
-      query {
-        film {
-          ...lol
-          __typename
-        }
-      }
-      ${fragment}
-    `;
-
-    const result = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: print(query) }),
-    }).then((r) => r.json());
-
-    return result.data.film;
-  }
 
   async query(store, type, options) {
     const serializer = store.serializerFor(type.modelName);
@@ -44,12 +15,14 @@ export default class Graphql extends DS.Adapter {
     const url = [this.host, this.namespace, 'graphql']
       .filter(isPresent)
       .join('/');
+
+    const fieldName = this.fieldForQuery(type);
     const fragmentName = shortId();
     const fragment = serializer.fragment(modelClass, fragmentName);
 
     const query = gql`
       query {
-        film${this.serializeParams(options)} {
+        ${fieldName}${this.serializeParams(options)} {
           ...${fragmentName}
           id
           __typename
@@ -66,11 +39,15 @@ export default class Graphql extends DS.Adapter {
       body: JSON.stringify({ query: `query ${print(query)}` }),
     }).then((r) => r.json());
 
-    if (Array.isArray(result.data.film)) {
-      return result.data.film;
+    if (Array.isArray(result.data[fieldName])) {
+      return result.data[fieldName];
     } else {
-      return [result.data.film];
+      return [result.data[fieldName]];
     }
+  }
+
+  fieldForQuery(modelClass) {
+    return pluralize(modelClass.modelName).toLowerCase();
   }
 
   // * `createRecord()`
