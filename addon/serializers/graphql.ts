@@ -1,16 +1,35 @@
 import DS from 'ember-data';
+import gql from 'graphql-tag';
 
 export default class Graphql extends DS.Serializer {
   normalizeResponse(store, modelClass, payload) {
+    if (Array.isArray(payload)) {
+      return payload
+        .map((hash) => this.normalize(store, modelClass, hash))
+        .reduce(
+          (acc, { data, included }) => {
+            return {
+              data: [...acc.data, data],
+              included: [...acc.included, ...included],
+            };
+          },
+          { data: [], included: [] }
+        );
+    } else {
+      return this.normalize(store, modelClass, payload);
+    }
+  }
+
+  normalize(store, modelClass, hash) {
     return {
       data: {
-        id: payload.id.toString(),
-        type: this.modelNameFromResponse(payload),
-        attributes: this.attributesFromResponse(modelClass, payload),
-        relationships: this.relationshipsFromResponse(modelClass, payload),
+        id: hash.id.toString(),
+        type: this.modelNameFromResponse(hash),
+        attributes: this.attributesFromResponse(modelClass, hash),
+        relationships: this.relationshipsFromResponse(modelClass, hash),
       },
 
-      included: this.includedResourcesFromResponse(store, modelClass, payload),
+      included: this.includedResourcesFromResponse(store, modelClass, hash),
     };
   }
 
@@ -46,8 +65,18 @@ export default class Graphql extends DS.Serializer {
     });
   }
 
+  fragment(modelClass, fragmentName) {
+    const attributeNames = Array.from(modelClass.attributes.keys());
+
+    return gql`
+    fragment ${fragmentName} on ${modelClass.name} {
+      ${attributeNames.join('\n')}
+    }
+    `;
+  }
+
   modelNameFromResponse({ __typename }) {
-    return __typename;
+    return __typename.toLowerCase();
   }
 }
 

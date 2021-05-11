@@ -1,6 +1,7 @@
 import { module, test } from 'qunit';
 import { setupTest } from 'ember-qunit';
 import Model, { attr, belongsTo } from '@ember-data/model';
+import gql from 'graphql-tag';
 
 module('Unit | Serializer | graphql', function (hooks) {
   setupTest(hooks);
@@ -26,7 +27,7 @@ module('Unit | Serializer | graphql', function (hooks) {
         id: 3,
         name: 'Frej',
         age: 37,
-        __typename: 'user',
+        __typename: 'User',
       };
 
       const json = serializer.normalizeResponse(store, User, payload);
@@ -41,6 +42,44 @@ module('Unit | Serializer | graphql', function (hooks) {
           },
           relationships: {},
         },
+
+        included: [],
+      });
+    });
+
+    test('normalize array', function (assert) {
+      const store = this.owner.lookup('service:store');
+      const serializer = this.owner.lookup('serializer:graphql');
+
+      class User extends Model {
+        @attr('string') declare name: string;
+        @attr('number') declare age: number;
+      }
+      this.owner.register('model:user', User);
+
+      const payload = [
+        {
+          id: 3,
+          name: 'Frej',
+          age: 37,
+          __typename: 'User',
+        },
+      ];
+
+      const json = serializer.normalizeResponse(store, User, payload);
+
+      assert.deepEqual(json, {
+        data: [
+          {
+            id: '3',
+            type: 'user',
+            attributes: {
+              name: 'Frej',
+              age: 37,
+            },
+            relationships: {},
+          },
+        ],
 
         included: [],
       });
@@ -74,10 +113,10 @@ module('Unit | Serializer | graphql', function (hooks) {
           id: 1,
           name: 'Apple Inc.',
           nickname: 'Tim Apple',
-          __typename: 'workplace',
+          __typename: 'Workplace',
         },
 
-        __typename: 'user',
+        __typename: 'User',
       };
 
       const json = serializer.normalizeResponse(store, User, payload);
@@ -110,9 +149,29 @@ module('Unit | Serializer | graphql', function (hooks) {
   test('modelNameFromResponse', function (assert) {
     const serializer = this.owner.lookup('serializer:graphql');
 
-    const result = serializer.modelNameFromResponse({ __typename: 'user' });
+    const result = serializer.modelNameFromResponse({ __typename: 'User' });
 
     assert.equal(result, 'user');
+  });
+
+  test('fragments', function (assert) {
+    const serializer = this.owner.lookup('serializer:graphql');
+    class User extends Model {
+      @attr('string') declare name: string;
+      @attr('number') declare age: number;
+    }
+
+    const result = serializer.fragment(User, 'myUserFragment');
+
+    assert.deepEqual(
+      result,
+      gql`
+        fragment myUserFragment on User {
+          name
+          age
+        }
+      `
+    );
   });
 
   test('attributesFromResponse', function (assert) {
