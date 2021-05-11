@@ -1,0 +1,9 @@
+<ul>
+  {{#each this.model as |film|}}
+    <li>
+      <LinkTo @route='film' @model={{film.id}}>
+        <i>{{film.title}}</i>
+      </LinkTo>
+    </li>
+  {{/each}}
+</ul>
