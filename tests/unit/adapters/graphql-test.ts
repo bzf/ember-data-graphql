@@ -47,6 +47,15 @@ module('Unit | Adapter | graphql', function (hooks) {
       age: 35,
       __typename: 'User',
     });
+
+    const requests = this.server.pretender.handledRequests;
+    assert.equal(requests.length, 1);
+
+    const { query } = JSON.parse(requests[0].requestBody);
+    assert.equal(
+      query,
+      'query {\n  user(id: 1) {\n    ...user1\n    id\n    __typename\n  }\n}\n\nfragment user1 on User {\n  name\n  age\n}\n'
+    );
   });
 
   test('query', async function (assert) {
@@ -84,6 +93,35 @@ module('Unit | Adapter | graphql', function (hooks) {
       meta: { hello: 1 },
       data: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
     });
+
+    const requests = this.server.pretender.handledRequests;
+    assert.equal(requests.length, 1);
+
+    const { query } = JSON.parse(requests[0].requestBody);
+    assert.equal(
+      query,
+      `query {
+  users {
+    pageInfo {
+      startCursor
+      hasNextPage
+      hasPreviousPage
+      endCursor
+    }
+    users {
+      ...user
+      id
+      __typename
+    }
+  }
+}
+
+fragment user on User {
+  name
+  age
+}
+`
+    );
   });
 
   test('queryRecord', async function (assert) {
@@ -112,7 +150,7 @@ module('Unit | Adapter | graphql', function (hooks) {
     this.owner.register('model:user', User);
     this.owner.register('serializer:user', GraphqlSerializer);
 
-    const result = await adapter.queryRecord(store, User, {}, []);
+    const result = await adapter.queryRecord(store, User, { id: 1 }, []);
 
     assert.deepEqual(result, {
       id: 1,
@@ -120,6 +158,27 @@ module('Unit | Adapter | graphql', function (hooks) {
       age: 35,
       __typename: 'User',
     });
+
+    const requests = this.server.pretender.handledRequests;
+    assert.equal(requests.length, 1);
+
+    const { query } = JSON.parse(requests[0].requestBody);
+    assert.equal(
+      query,
+      `query {
+  user(id: 1) {
+    ...userid
+    id
+    __typename
+  }
+}
+
+fragment userid on User {
+  name
+  age
+}
+`
+    );
   });
 
   test('serializeParams', function (assert) {

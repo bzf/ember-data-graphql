@@ -25,6 +25,7 @@ module.exports = function (environment) {
 
   ENV['ember-cli-mirage'] = {
     enabled: environment === 'test',
+    trackRequests: environment === 'test',
   };
 
   if (environment === 'development') {

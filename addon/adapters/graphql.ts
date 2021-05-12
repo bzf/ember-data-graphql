@@ -17,7 +17,7 @@ export default class Graphql extends DS.Adapter {
       .join('/');
 
     const fieldName = this.fieldForQueryRecord(type);
-    const fragmentName = shortId();
+    const fragmentName = `${type.modelName}${id.toString().replace(/\W/g, '')}`;
     const fragment = serializer.fragment(modelClass, fragmentName);
 
     const query = gql`
@@ -46,7 +46,7 @@ export default class Graphql extends DS.Adapter {
     }
   }
 
-  async query(store, type, options) {
+  async query(store, type, options = {}) {
     const serializer = store.serializerFor(type.modelName);
     const modelClass = store.modelFor(type.modelName);
 
@@ -55,7 +55,7 @@ export default class Graphql extends DS.Adapter {
       .join('/');
 
     const fieldName = this.fieldForQuery(type);
-    const fragmentName = shortId();
+    const fragmentName = `${type.modelName}${Object.keys(options).join('')}`;
     const fragment = serializer.fragment(modelClass, fragmentName);
 
     const query = gql`
@@ -95,7 +95,7 @@ export default class Graphql extends DS.Adapter {
       .join('/');
 
     const fieldName = this.fieldForQueryRecord(type);
-    const fragmentName = shortId();
+    const fragmentName = `${type.modelName}${Object.keys(options).join('')}`;
     const fragment = serializer.fragment(modelClass, fragmentName);
 
     const query = gql`
@@ -165,19 +165,6 @@ export default class Graphql extends DS.Adapter {
       return value;
     }
   }
-}
-
-function shortId() {
-  var result = [];
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  var charactersLength = characters.length;
-  for (var i = 0; i < 16; i++) {
-    result.push(
-      characters.charAt(Math.floor(Math.random() * charactersLength))
-    );
-  }
-
-  return result.join('');
 }
 
 // DO NOT DELETE: this is how TypeScript knows how to look up your adapters.
