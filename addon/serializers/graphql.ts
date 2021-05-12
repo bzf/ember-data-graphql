@@ -3,33 +3,31 @@ import gql from 'graphql-tag';
 
 export default class Graphql extends DS.Serializer {
   normalizeResponse(store, modelClass, payload) {
+    let result = undefined;
+
     if (Array.isArray(payload)) {
-      return payload
-        .map((hash) => this.normalize(store, modelClass, hash))
-        .reduce(
-          (acc, { data, included }) => {
-            return {
-              data: [...acc.data, data],
-              included: [...acc.included, ...included],
-            };
-          },
-          { data: [], included: [] }
-        );
+      result = this.normalizeArray(store, modelClass, payload);
     } else if (payload.data) {
-      return payload.data
-        .map((hash) => this.normalize(store, modelClass, hash))
-        .reduce(
-          (acc, { data, included }) => {
-            return {
-              data: [...acc.data, data],
-              included: [...acc.included, ...included],
-            };
-          },
-          { data: [], included: [] }
-        );
+      result = this.normalizeArray(store, modelClass, payload.data);
     } else {
-      return this.normalize(store, modelClass, payload);
+      result = this.normalize(store, modelClass, payload);
     }
+
+    return { ...result, meta: payload.meta || {} };
+  }
+
+  normalizeArray(store, modelClass, payload) {
+    return payload
+      .map((hash) => this.normalize(store, modelClass, hash))
+      .reduce(
+        (acc, { data, included }) => {
+          return {
+            data: [...acc.data, data],
+            included: [...acc.included, ...included],
+          };
+        },
+        { data: [], included: [] }
+      );
   }
 
   normalize(store, modelClass, hash) {

@@ -44,6 +44,7 @@ module('Unit | Serializer | graphql', function (hooks) {
         },
 
         included: [],
+        meta: {},
       });
     });
 
@@ -82,6 +83,7 @@ module('Unit | Serializer | graphql', function (hooks) {
         ],
 
         included: [],
+        meta: {},
       });
     });
 
@@ -142,6 +144,7 @@ module('Unit | Serializer | graphql', function (hooks) {
             data: { name: 'Apple Inc.', nickname: 'Tim Apple' },
           },
         ],
+        meta: {},
       });
     });
   });

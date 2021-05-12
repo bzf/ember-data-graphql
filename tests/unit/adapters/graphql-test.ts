@@ -55,7 +55,7 @@ module('Unit | Adapter | graphql', function (hooks) {
       () => ({
         data: {
           users: {
-            pageInfo: {},
+            pageInfo: { hello: 1 },
             users: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
           },
         },
@@ -81,7 +81,7 @@ module('Unit | Adapter | graphql', function (hooks) {
     const result = await adapter.query(store, User, undefined, []);
 
     assert.deepEqual(result, {
-      meta: {},
+      meta: { hello: 1 },
       data: [{ id: 1, name: 'Bruno', age: 35, __typename: 'User' }],
     });
   });
