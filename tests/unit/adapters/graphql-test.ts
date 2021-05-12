@@ -13,6 +13,42 @@ module('Unit | Adapter | graphql', function (hooks) {
     assert.ok(adapter);
   });
 
+  test('findRecord', async function (assert) {
+    this.server.post(
+      '/graphql',
+      () => ({
+        data: {
+          user: { id: 1, name: 'Bruno', age: 35, __typename: 'User' },
+        },
+      }),
+      200
+    );
+
+    const store = this.owner.lookup('service:store');
+    const adapter = this.owner.lookup('adapter:graphql');
+
+    class User extends Model {
+      modelName = 'user';
+
+      @attr('string') declare name: string;
+      @attr('number') declare age: number;
+    }
+
+    User.modelName = 'user';
+
+    this.owner.register('model:user', User);
+    this.owner.register('serializer:user', GraphqlSerializer);
+
+    const result = await adapter.findRecord(store, User, 1, []);
+
+    assert.deepEqual(result, {
+      id: 1,
+      name: 'Bruno',
+      age: 35,
+      __typename: 'User',
+    });
+  });
+
   test('query', async function (assert) {
     this.server.post(
       '/graphql',

@@ -8,6 +8,44 @@ export default class Graphql extends DS.Adapter {
   host = undefined;
   namespace = undefined;
 
+  async findRecord(store, type, id) {
+    const serializer = store.serializerFor(type.modelName);
+    const modelClass = store.modelFor(type.modelName);
+
+    const url = [this.host, this.namespace, 'graphql']
+      .filter(isPresent)
+      .join('/');
+
+    const fieldName = this.fieldForQueryRecord(type);
+    const fragmentName = shortId();
+    const fragment = serializer.fragment(modelClass, fragmentName);
+
+    const query = gql`
+      query {
+        ${fieldName}${this.serializeParams({ id })} {
+          ...${fragmentName}
+          id
+          __typename
+        }
+      }
+      ${fragment}
+    `;
+
+    const result = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query: `query ${print(query)}` }),
+    }).then((r) => r.json());
+
+    if (Array.isArray(result.data[fieldName])) {
+      return result.data[fieldName].firstObject;
+    } else {
+      return result.data[fieldName];
+    }
+  }
+
   async query(store, type, options) {
     const serializer = store.serializerFor(type.modelName);
     const modelClass = store.modelFor(type.modelName);
