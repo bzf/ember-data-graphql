@@ -1,0 +1,9 @@
+<ul>
+  {{#each this.model as |person|}}
+    <li>
+      <i>{{person.name}}</i>
+      born on the planet
+      {{person.homeworld.name}}
+    </li>
+  {{/each}}
+</ul>

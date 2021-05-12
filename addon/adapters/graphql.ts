@@ -18,7 +18,7 @@ export default class Graphql extends DS.Adapter {
 
     const fieldName = this.fieldForQueryRecord(type);
     const fragmentName = `${type.modelName}${id.toString().replace(/\W/g, '')}`;
-    const fragment = serializer.fragment(modelClass, fragmentName);
+    const fragment = serializer.fragment(store, modelClass, fragmentName);
 
     const query = gql`
       query {
@@ -56,7 +56,7 @@ export default class Graphql extends DS.Adapter {
 
     const fieldName = this.fieldForQuery(type);
     const fragmentName = `${type.modelName}${Object.keys(options).join('')}`;
-    const fragment = serializer.fragment(modelClass, fragmentName);
+    const fragment = serializer.fragment(store, modelClass, fragmentName);
 
     const query = gql`
       query {
@@ -96,7 +96,7 @@ export default class Graphql extends DS.Adapter {
 
     const fieldName = this.fieldForQueryRecord(type);
     const fragmentName = `${type.modelName}${Object.keys(options).join('')}`;
-    const fragment = serializer.fragment(modelClass, fragmentName);
+    const fragment = serializer.fragment(store, modelClass, fragmentName);
 
     const query = gql`
       query {

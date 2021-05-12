@@ -141,7 +141,7 @@ module('Unit | Serializer | graphql', function (hooks) {
           {
             id: 1,
             type: 'workplace',
-            data: { name: 'Apple Inc.', nickname: 'Tim Apple' },
+            attributes: { name: 'Apple Inc.', nickname: 'Tim Apple' },
           },
         ],
         meta: {},
@@ -158,13 +158,14 @@ module('Unit | Serializer | graphql', function (hooks) {
   });
 
   test('fragments', function (assert) {
+    const store = this.owner.lookup('service:store');
     const serializer = this.owner.lookup('serializer:graphql');
     class User extends Model {
       @attr('string') declare name: string;
       @attr('number') declare age: number;
     }
 
-    const result = serializer.fragment(User, 'myUserFragment');
+    const result = serializer.fragment(store, User, 'myUserFragment');
 
     assert.deepEqual(
       result,

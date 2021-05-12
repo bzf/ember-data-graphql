@@ -55,7 +55,7 @@ export default class Graphql extends DS.Serializer {
       (hash, [a, [b]]) =>
         Object.assign({}, hash, {
           [b.key]: {
-            data: { id: payload[b.key].id, type: b.name },
+            data: { id: payload[b.key].id, type: b.type },
           },
         }),
       {}
@@ -64,23 +64,39 @@ export default class Graphql extends DS.Serializer {
 
   includedResourcesFromResponse(store, modelClass, payload) {
     return Array.from(modelClass.relationships).flatMap(([a, [b]]) => {
-      const model = store.modelFor(b.meta.name);
+      const model = store.modelFor(b.meta.type);
       const value = payload[b.meta.key];
 
       return {
-        data: this.attributesFromResponse(model, value),
-        type: b.name,
+        attributes: this.attributesFromResponse(model, value),
+        type: b.type,
         id: value.id,
       };
     });
   }
 
-  fragment(modelClass, fragmentName) {
+  fragment(store, modelClass, fragmentName) {
     const attributeNames = Array.from(modelClass.attributes.keys());
+    const attributeFields = attributeNames.join('\n');
+    const fields = [attributeFields];
+
+    if (modelClass.relationships) {
+      for (const [entry] of Array.from(modelClass.relationships.values())) {
+        const relationModel = store.modelFor(entry.meta.type);
+        const modelAttributes = Array.from(relationModel.attributes.keys());
+        const { meta } = entry;
+
+        if (meta.options?.async === false) {
+          fields.push(
+            `${meta.name} { id\n${modelAttributes.join('\n')} __typename }`
+          );
+        }
+      }
+    }
 
     return gql`
     fragment ${fragmentName} on ${modelClass.name} {
-      ${attributeNames.join('\n')}
+      ${fields.join('\n')}
     }
     `;
   }
