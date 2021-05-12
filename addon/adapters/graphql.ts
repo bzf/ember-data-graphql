@@ -137,7 +137,7 @@ export default class Graphql extends DS.Adapter {
   }
 
   pageInfoKeys() {
-    return ['startCursor', 'hasNextPage'];
+    return ['startCursor', 'hasNextPage', 'hasPreviousPage', 'endCursor'];
   }
 
   // * `createRecord()`

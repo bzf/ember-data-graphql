@@ -1,11 +1,19 @@
-{{log 'Meta:' this.model.meta}}
+<div {{did-insert (perform this.fetchFilms)}}>
+  <ul>
+    {{#each this.films as |film|}}
+      <li>
+        <LinkTo @route='film' @model={{film.id}}>
+          <i>{{film.title}}</i>
+        </LinkTo>
+      </li>
+    {{/each}}
+  </ul>
 
-<ul>
-  {{#each this.model as |film|}}
-    <li>
-      <LinkTo @route='film' @model={{film.id}}>
-        <i>{{film.title}}</i>
-      </LinkTo>
-    </li>
-  {{/each}}
-</ul>
+  {{#if this.meta.hasNextPage}}
+    <button type='button' {{on 'click' (perform this.fetchFilms)}}>
+      Load more films
+    </button>
+  {{else}}
+    <p>All films loaded.</p>
+  {{/if}}
+</div>
