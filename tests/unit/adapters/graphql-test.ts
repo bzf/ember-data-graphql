@@ -125,50 +125,65 @@ module('Unit | Adapter | graphql', function (hooks) {
     );
   });
 
-  // test('findRecord with async relation only includes the id', async function (assert) {
-  //   this.server.post(
-  //     '/graphql',
-  //     () => ({
-  //       data: {
-  //         user: { id: 1, name: 'Bruno', age: 35, __typename: 'User' },
-  //       },
-  //     }),
-  //     200
-  //   );
+  test('findRecord with async relation only includes the id', async function (assert) {
+    this.server.post(
+      '/graphql',
+      () => ({
+        data: {
+          user: {
+            id: 1,
+            name: 'Bruno',
+            age: 35,
+            __typename: 'User',
+            post_id: 1,
+          },
+        },
+      }),
+      200
+    );
 
-  //   const store = this.owner.lookup('service:store');
-  //   const adapter = this.owner.lookup('adapter:graphql');
+    const store = this.owner.lookup('service:store');
+    const adapter = this.owner.lookup('adapter:graphql');
 
-  //   class User extends Model {
-  //     modelName = 'user';
+    class Post extends Model {
+      @attr('string') declare title: string;
+    }
 
-  //     @attr('string') declare name: string;
-  //     @attr('number') declare age: number;
-  //   }
+    class User extends Model {
+      modelName = 'user';
 
-  //   User.modelName = 'user';
+      @attr('string') declare name: string;
+      @attr('number') declare age: number;
 
-  //   this.owner.register('model:user', User);
-  //   this.owner.register('serializer:user', GraphqlSerializer);
+      @hasMany('post', { async: true }) declare posts: Post[];
+    }
 
-  //   const result = await adapter.findRecord(store, User, 1, []);
+    User.modelName = 'user';
 
-  //   assert.deepEqual(result, {
-  //     id: 1,
-  //     name: 'Bruno',
-  //     age: 35,
-  //     __typename: 'User',
-  //   });
+    this.owner.register('model:user', User);
+    this.owner.register('model:post', Post);
+    this.owner.register('serializer:user', GraphqlSerializer);
 
-  //   const requests = this.server.pretender.handledRequests;
-  //   assert.equal(requests.length, 1);
+    const result = await adapter.findRecord(store, User, 1, []);
 
-  //   const { query } = JSON.parse(requests[0].requestBody);
-  //   assert.equal(
-  //     query,
-  //     'query {\n  user(id: 1) {\n    ...user1\n    id\n    __typename\n  }\n}\n\nfragment user1 on User {\n  name\n  age\n}\n'
-  //   );
-  // });
+    assert.deepEqual(result, {
+      id: 1,
+      name: 'Bruno',
+      age: 35,
+      __typename: 'User',
+      posts: [{ id: 1, __typename: 'post' }],
+    });
+
+    const requests = this.server.pretender.handledRequests;
+    assert.equal(requests.length, 1);
+
+    const { query } = JSON.parse(requests[0].requestBody);
+    console.log(query);
+    assert.equal(
+      query,
+      'query {\n  user(id: 1) {\n    ...user1\n    id\n    __typename\n  }\n}\n\nfragment user1 on User {\n  name\n  age\n  posts {\n    id\n    __typename\n  }\n}\n'
+    );
+  });
 
   test('query', async function (assert) {
     this.server.post(
